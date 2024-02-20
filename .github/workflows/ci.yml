@@ -10,7 +10,7 @@ name: CI
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
       - name: Rust
@@ -69,7 +69,7 @@ jobs:
     name: Unit Test
     needs: lint
     # we want to run on the latest linux environment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     # the steps our job runs **in order**
     steps:
