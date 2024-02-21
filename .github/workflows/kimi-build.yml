@@ -1,67 +1,47 @@
-name: Build Clash Nyanpasu
+name: Clash Nyanpasu CI
 
 on:
   push:
     branches:
-      - main  # 触发 CI 的分支，这里假设是 main 分支
+      - main
   pull_request:
     branches:
-      - main  # 触发 CI 的 pull request 分支
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-20.04  # 使用 Ubuntu 作为运行环境
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        components: rustfmt, clippy, rustc
+    - name: Install Rust and Node.js
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y rustc cargo
+        curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+        sudo apt-get install -y nodejs
 
-    - name: Install Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+    - name: Install pnpm
+      run: npm install -g pnpm
 
     - name: Install dependencies
-      run: |
-        npm install -g pnpm
-        pnpm install
+      run: pnpm install
 
-    - name: Build Rust
-      run: |
-        cargo build --release
+    - name: Build the project
+      run: pnpm build
 
-    - name: Build frontend
-      run: |
-        pnpm run build
-
-    - name: Build tauri
-      run: |
-        pnpm run tauri build
-
-    - name: Test
-      run: |
-        # Add your test commands here, if needed
-
-    - name: Upload artifacts
+    - name: Archive production artifacts
       uses: actions/upload-artifact@v2
       with:
         name: clash-nyanpasu
-        path: |
-          target/release/clash-nyanpasu
-          tauri/target/release/clash-nyanpasu
+        path: dist/
 
-    - name: Release
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    - name: Publish Release
+      if: github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          target/release/clash-nyanpasu
-          tauri/target/release/clash-nyanpasu
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        files: dist/*
+        tag_name: ${{ github.ref }}
+        draft: true
