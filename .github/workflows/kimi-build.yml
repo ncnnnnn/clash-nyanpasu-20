@@ -1,0 +1,67 @@
+name: Build Clash Nyanpasu
+
+on:
+  push:
+    branches:
+      - main  # 触发 CI 的分支，这里假设是 main 分支
+  pull_request:
+    branches:
+      - main  # 触发 CI 的 pull request 分支
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04  # 使用 Ubuntu 作为运行环境
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt, clippy, rustc
+
+    - name: Install Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: |
+        npm install -g pnpm
+        pnpm install
+
+    - name: Build Rust
+      run: |
+        cargo build --release
+
+    - name: Build frontend
+      run: |
+        pnpm run build
+
+    - name: Build tauri
+      run: |
+        pnpm run tauri build
+
+    - name: Test
+      run: |
+        # Add your test commands here, if needed
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: clash-nyanpasu
+        path: |
+          target/release/clash-nyanpasu
+          tauri/target/release/clash-nyanpasu
+
+    - name: Release
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          target/release/clash-nyanpasu
+          tauri/target/release/clash-nyanpasu
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
