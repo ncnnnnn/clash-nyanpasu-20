@@ -33,7 +33,9 @@ jobs:
           pnpm run check
 
       - name: Build the project
-        run: pnpm build
+        run: |
+          pnpm build
+          cp backend/target/release/bundle/deb/* dist/
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
